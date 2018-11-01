@@ -12,7 +12,6 @@ func (setup *FabricSetup) InvokeHello(value string) (string, error) {
 	// Prepare arguments
 	var args []string
 	args = append(args, "invoke")
-	args = append(args, "invoke")
 	args = append(args, "hello")
 	args = append(args, value)
 
@@ -29,7 +28,7 @@ func (setup *FabricSetup) InvokeHello(value string) (string, error) {
 	defer setup.event.Unregister(reg)
 
 	// Create a request (proposal) and send it
-	response, err := setup.client.Execute(channel.Request{ChaincodeID: setup.ChainCodeID, Fcn: args[0], Args: [][]byte{[]byte(args[1]), []byte(args[2]), []byte(args[3])}, TransientMap: transientDataMap})
+	response, err := setup.client.Execute(channel.Request{ChaincodeID: setup.ChainCodeID, Fcn: args[0], Args: [][]byte{[]byte(args[1]), []byte(args[2])}, TransientMap: transientDataMap})
 	if err != nil {
 		return "", fmt.Errorf("failed to move funds: %v", err)
 	}

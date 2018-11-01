@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/event"
+	"github.com/hyperledger/fabric-sdk-go/pkg/client/ledger"
 	mspclient "github.com/hyperledger/fabric-sdk-go/pkg/client/msp"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/resmgmt"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/errors/retry"
@@ -33,6 +34,7 @@ type FabricSetup struct {
 	admin           *resmgmt.Client
 	sdk             *fabsdk.FabricSDK
 	event           *event.Client
+	ledger          *ledger.Client
 }
 
 // Initialize reads the configuration file and sets up the client, chain and event hub

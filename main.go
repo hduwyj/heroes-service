@@ -3,10 +3,14 @@ package main
 import (
 	"fmt"
 	"github.com/chainHero/heroes-service/blockchain"
-	"github.com/chainHero/heroes-service/web"
-	"github.com/chainHero/heroes-service/web/controllers"
+	"github.com/chainHero/heroes-service/web/controllers/util"
+	"github.com/chainHero/heroes-service/web/router"
 	"os"
 )
+
+type Application struct {
+	Fabric *blockchain.FabricSetup
+}
 
 func main() {
 	// Definition of the Fabric SDK properties
@@ -47,8 +51,14 @@ func main() {
 	}
 
 	// Launch the web application listening
-	app := &controllers.Application{
+
+	//app := &controllers.Application{
+	//	Fabric: &fSetup,
+	//}
+	//web.Serve(app)
+	app := &util.Application{
 		Fabric: &fSetup,
 	}
-	web.Serve(app)
+	app.GetApp()
+	router.InitRouter()
 }

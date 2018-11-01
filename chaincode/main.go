@@ -1,136 +1,115 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 )
 
-// HeroesServiceChaincode implementation of Chaincode
-type HeroesServiceChaincode struct {
+type Voter struct {
+	Id      int    `json:"id"`
+	Name    string `json:"name"`
+	IdCard  string `json:"idCard"`
+	IsVoted bool   `json:"isVoted"` //投票人是否已经投票,每人一票
 }
 
-// Init of the chaincode
-// This function is called only one when the chaincode is instantiated.
-// So the goal is to prepare the ledger to handle future requests.
-func (t *HeroesServiceChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
-	fmt.Println("########### HeroesServiceChaincode Init ###########")
+type Candidate struct {
+	Id        int    `json:"id"`
+	Name      string `json:"name"`
+	Gender    string `json:"gender"`
+	IdCard    string `json:"idCard"`
+	Content   string `json:"content"`
+	VoteCount int    `json:"voteCount"` //候选人得票数
+}
 
-	// Get the function and arguments from the request
-	function, _ := stub.GetFunctionAndParameters()
+//数据从数据库导出？？？？？？？？？？
+var voters = []*Voter{
+	{1, "zhangsan", "123456", false},
+	{2, "lisi", "123456", false},
+	{3, "wangwu", "123456", false},
+}
 
-	// Check if the request is the init function
-	if function != "init" {
-		return shim.Error("Unknown function call")
+var candidates = []*Candidate{
+	{1, "奥巴马", "男", "123456789", "请投奥巴马一票", 0},
+	{2, "特朗普", "男", "123456789", "请投特朗普一票", 0},
+	{3, "希拉里", "女", "123456789", "请投希拉里一票", 0},
+}
+
+type SmartContract struct {
+}
+
+const (
+	VOTER      = "voter"
+	CANDIDATES = "candidate"
+)
+
+func (s *SmartContract) Init(stub shim.ChaincodeStubInterface) pb.Response {
+	voterAsBytes, err := json.Marshal(voters)
+	if err != nil {
+		return shim.Error(err.Error())
 	}
-
-	// Put in the ledger the key/value hello/world
-	err := stub.PutState("hello", []byte("world"))
+	err = stub.PutState(VOTER, voterAsBytes)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
 
-	// Return a successful message
+	candidatesAsBytes, err := json.Marshal(candidates)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	err = stub.PutState(CANDIDATES, candidatesAsBytes)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	return shim.Success([]byte("Init Success"))
+}
+func (s *SmartContract) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
+	funcName, args := stub.GetFunctionAndParameters()
+	if funcName == "queryAllCandidates" {
+		return s.queryAllCandidates(stub, args)
+	} else if funcName == "vote" {
+		return s.vote(stub, args)
+	}
+	return shim.Error("Invoke Failed")
+}
+
+func (s *SmartContract) queryAllCandidates(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	candidatesAsBytes, err := stub.GetState(CANDIDATES)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	return shim.Success(candidatesAsBytes)
+}
+func (s *SmartContract) vote(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	voteName := args[0]
+	if len(args) != 1 {
+		return shim.Error("vote:Incorrect number of arguments!")
+	}
+	candidatesAsBytes, err := stub.GetState(CANDIDATES)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	cs := make([]*Candidate, 5)
+	json.Unmarshal(candidatesAsBytes, &cs)
+	for _, c := range cs {
+		if c.Name == voteName {
+			c.VoteCount++
+		}
+	}
+	candidatesAsBytes, err = json.Marshal(cs)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	stub.PutState(CANDIDATES, candidatesAsBytes)
+	fmt.Println(string(candidatesAsBytes))
+	stub.SetEvent("eventInvoke", nil)
 	return shim.Success(nil)
 }
 
-// Invoke
-// All future requests named invoke will arrive here.
-func (t *HeroesServiceChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
-	fmt.Println("########### HeroesServiceChaincode Invoke ###########")
-
-	// Get the function and arguments from the request
-	function, args := stub.GetFunctionAndParameters()
-
-	// Check whether it is an invoke request
-	if function != "invoke" {
-		return shim.Error("Unknown function call")
-	}
-
-	// Check whether the number of arguments is sufficient
-	if len(args) < 1 {
-		return shim.Error("The number of arguments is insufficient.")
-	}
-
-	// In order to manage multiple type of request, we will check the first argument.
-	// Here we have one possible argument: query (every query request will read in the ledger without modification)
-	if args[0] == "query" {
-		return t.query(stub, args)
-	}
-
-	// The update argument will manage all update in the ledger
-	if args[0] == "invoke" {
-		return t.invoke(stub, args)
-	}
-
-	// If the arguments given don’t match any function, we return an error
-	return shim.Error("Unknown action, check the first argument")
-}
-
-// query
-// Every readonly functions in the ledger will be here
-func (t *HeroesServiceChaincode) query(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	fmt.Println("########### HeroesServiceChaincode query ###########")
-
-	// Check whether the number of arguments is sufficient
-	if len(args) < 2 {
-		return shim.Error("The number of arguments is insufficient.")
-	}
-
-	// Like the Invoke function, we manage multiple type of query requests with the second argument.
-	// We also have only one possible argument: hello
-	if args[1] == "hello" {
-
-		// Get the state of the value matching the key hello in the ledger
-		state, err := stub.GetState("hello")
-		if err != nil {
-			return shim.Error("Failed to get state of hello")
-		}
-
-		// Return this value in response
-		return shim.Success(state)
-	}
-
-	// If the arguments given don’t match any function, we return an error
-	return shim.Error("Unknown query action, check the second argument.")
-}
-
-// invoke
-// Every functions that read and write in the ledger will be here
-func (t *HeroesServiceChaincode) invoke(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	fmt.Println("########### HeroesServiceChaincode invoke ###########")
-
-	if len(args) < 2 {
-		return shim.Error("The number of arguments is insufficient.")
-	}
-
-	// Check if the ledger key is "hello" and process if it is the case. Otherwise it returns an error.
-	if args[1] == "hello" && len(args) == 3 {
-
-		// Write the new value in the ledger
-		err := stub.PutState("hello", []byte(args[2]))
-		if err != nil {
-			return shim.Error("Failed to update state of hello")
-		}
-
-		// Notify listeners that an event "eventInvoke" have been executed (check line 19 in the file invoke.go)
-		err = stub.SetEvent("eventInvoke", []byte{})
-		if err != nil {
-			return shim.Error(err.Error())
-		}
-
-		// Return this value in response
-		return shim.Success(nil)
-	}
-
-	// If the arguments given don’t match any function, we return an error
-	return shim.Error("Unknown invoke action, check the second argument.")
-}
-
 func main() {
-	// Start the chaincode and make it ready for futures requests
-	err := shim.Start(new(HeroesServiceChaincode))
-	if err != nil {
-		fmt.Printf("Error starting Heroes Service chaincode: %s", err)
+	if err := shim.Start(new(SmartContract)); err != nil {
+		fmt.Printf("Error starting Simple chaincode: %s", err)
 	}
 }
