@@ -1,0 +1,8 @@
+{{template "header" .}}
+<h1><a href="home">返回</a></h1>
+{{if .transactionID}}
+<h5>投票成功 TxId:{{.transactionID}}</h5>
+{{else}}
+<h5>投票失败,请重新投票</h5>
+{{end}}
+{{template "footer" .}}
