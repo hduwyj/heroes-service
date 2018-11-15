@@ -1,0 +1,46 @@
+<!-- 主页 -->
+
+{{template "header" .}}
+
+<div class="container">
+{{if .msg}}
+    <div class="alert alert-success" role="alert">
+    {{ .msg }}
+    </div>
+{{end}}
+    <form  name="lr" method="POST" action="">
+        <div class="text-center mb-4">
+            <h1 class="h3 mb-3 font-weight-normal">投票</h1>
+        </div>
+
+        <div class="form-label-group">
+            <input type="email" id="inputEmail" class="form-control" placeholder="Email address" name="username" required autofocus>
+            <label for="inputEmail">Email address</label>
+        </div>
+
+        <div class="form-label-group">
+            <input type="password" id="inputPassword" class="form-control" placeholder="Password" name="password"required>
+            <label for="inputPassword">Password</label>
+        </div>
+
+        <button class="btn btn-lg btn-primary btn-block" type="submit" onclick="register()">注册</button>
+        <button class="btn btn-lg btn-primary btn-block" type="submit" onclick="login()">登录</button>
+        <button class="btn btn-lg btn-primary btn-block" type="submit" onclick="return backToHome();">返回</button>
+    </form>
+    <script type="text/javascript">
+        function login(){
+            document.lr.action = "/user/login";
+            document.lr.submit();
+        }
+
+        function register(){
+            document.lr.action = "/user/register";
+            document.lr.submit();
+        }
+        function backToHome(){
+            window.location.href = "/";
+            return false;
+        }
+    </script>
+</div>
+{{template "footer" .}}

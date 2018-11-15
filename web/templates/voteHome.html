@@ -19,11 +19,68 @@
                         <li>简介:{{.Content}}</li>
                         <li>得票数:{{.VoteCount}}</li>
                     </ul>
-                    <a href="/home?op=vote&name={{.Name}}"><button type="submit" class="btn btn-lg btn-block btn-outline-primary">投票</button></a>
-
+                <!--    <a href="/vote?op=vote&name={{.Name}}"><button type="submit" class="btn btn-lg btn-block btn-outline-primary">投票</button></a> -->
                 </div>
             </div>
            {{end}}
-      </div>
+
+    <div class="container" >
+        <form method="post" action="/vote/v">
+            <div class="input-group mb-3">
+                <div class="input-group">
+                    <select class="custom-select" id="inputGroupSelect04" name="name">
+                        <option selected>Choose...</option>
+                    {{range .candidates}}
+                        <option value={{.Name}}>{{.Name}}</option>
+                    {{end}}
+                    </select>
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="submit">投票</button>
+                    </div>
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" >私 钥</span>
+                </div>
+                <input type="text" size="140" class="form-control" placeholder="私 钥" name="privateKey">
+            </div>
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" >公钥X</span>
+                </div>
+                <input type="text" size="140" class="form-control" placeholder="公钥X" name="publicKeyX">
+            </div>
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" >公钥Y</span>
+                </div>
+                <input type="text" size="140" class="form-control" placeholder="公钥Y" name="publicKeyY">
+            </div>
+        </form>
     </div>
+
+      </div>
+        <a href="/vote?op=genKey"><button type="submit" size="150" class="btn  btn-outline-primary">生成公私钥</button></a>
+
+        {{if .priv}}
+            <form method="post" action="/vote/insertKey">
+                <div class="form-group">
+                    <label for="exampleInputPassword1">私钥</label>
+                    <input type="text" class="form-control" id="exampleInputPassword1" name="priv" VALUE="{{.priv}}">
+                </div>
+                <div class="form-group">
+                    <label for="exampleInputPassword1">公钥X</label>
+                    <input type="text" class="form-control" id="exampleInputPassword1" name="publicKeyX" VALUE="{{.publicKey_x}}">
+                </div>
+                <div class="form-group">
+                    <label for="exampleInputPassword1">公钥Y</label>
+                    <input type="text" class="form-control" id="exampleInputPassword1" name="publicKeyY" VALUE="{{.publicKey_y}}">
+                </div>
+                <button type="submit" class="btn  btn-outline-primary">上传公钥</button>
+            </form>
+        {{end}}
+    </div>
+
+
 {{template "footer" .}}
