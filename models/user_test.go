@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -13,11 +12,6 @@ func TestUser(t *testing.T) {
 }
 
 func TestGetAllPk(t *testing.T) {
-	publicKeys, err := GetAllPk()
-	if err != nil {
-		t.Errorf("%v", err)
-	}
-	for _, value := range publicKeys {
-		fmt.Println(value.X, value.Y)
-	}
+
+	UpdateGenerateKey("wang")
 }

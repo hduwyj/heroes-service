@@ -23,9 +23,10 @@
                 </div>
             </div>
            {{end}}
-
+        </div>
+    </div>
     <div class="container" >
-        <form method="post" action="/vote/v">
+        <form                             id="j-puload-form" method="post" action="/vote/v" enctype="multipart/form-data">
             <div class="input-group mb-3">
                 <div class="input-group">
                     <select class="custom-select" id="inputGroupSelect04" name="name">
@@ -34,32 +35,19 @@
                         <option value={{.Name}}>{{.Name}}</option>
                     {{end}}
                     </select>
+                    <br>
+                    <hr>
+                <input type="file" id="j-upload-input" name="vote"/><button type="submit">投票</button>
+                    <!--
                     <div class="input-group-append">
                         <button class="btn btn-outline-secondary" type="submit">投票</button>
                     </div>
+                    -->
                 </div>
-            </div>
-            <div class="input-group mb-3">
-                <div class="input-group-prepend">
-                    <span class="input-group-text" >私 钥</span>
-                </div>
-                <input type="text" size="140" class="form-control" placeholder="私 钥" name="privateKey">
-            </div>
-            <div class="input-group mb-3">
-                <div class="input-group-prepend">
-                    <span class="input-group-text" >公钥X</span>
-                </div>
-                <input type="text" size="140" class="form-control" placeholder="公钥X" name="publicKeyX">
-            </div>
-            <div class="input-group mb-3">
-                <div class="input-group-prepend">
-                    <span class="input-group-text" >公钥Y</span>
-                </div>
-                <input type="text" size="140" class="form-control" placeholder="公钥Y" name="publicKeyY">
             </div>
         </form>
     </div>
-
+<!--
       </div>
         <a href="/vote?op=genKey"><button type="submit" size="150" class="btn  btn-outline-primary">生成公私钥</button></a>
 
@@ -80,7 +68,13 @@
                 <button type="submit" class="btn  btn-outline-primary">上传公钥</button>
             </form>
         {{end}}
+
+
+        </div>
+        <form  action="/vote/v" method="post" >
+
+        </form>
+
     </div>
-
-
+-->
 {{template "footer" .}}

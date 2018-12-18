@@ -6,33 +6,36 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func InitRouter() {
+func InitRouter(app *controllers.Application) {
 	router := gin.Default()
 	router.LoadHTMLGlob("web/templates/*")
 	router.Static("/assets", "web/assets")
 
-	router.GET("/", controllers.HomeConroller)
-	router.GET("/user", controllers.UserConroller)
+	router.GET("/", app.HomeController())
+	router.GET("/user", app.UserController())
 
+	router.GET("/admin", app.AdminControllerGet())
+	router.POST("/admin", app.AdminControllerPost())
+	router.GET("/admin/test", app.AdminPushController())
 	r1 := router.Group("/user")
 
 	{
-		r1.POST("/register", controllers.RegisterController)
-		r1.POST("/login", controllers.LoginController)
+		r1.POST("/register", app.RegisterController())
+		r1.POST("/login", app.LoginController())
 	}
 
 	r2 := router.Group("/vote")
 	r2.Use(middleWare.JWT())
 	{
-		r2.POST("/", controllers.VoteHomeHandle)
-		r2.GET("/", controllers.VoteHomeHandle)
-		r2.POST("/v", controllers.VoteV)
-		r2.POST("/insertKey", controllers.InsertKeyController)
+		r2.POST("/", app.VoteHomeHandle())
+		r2.POST("/prepare", app.PrepareController())
+		r2.GET("/", app.VoteHomeHandle())
+		r2.GET("/key", app.KeyController())
+		r2.GET("/genKey", app.GenKeyFileController())
+
+		r2.POST("/v", app.VoteV())
+		//r2.POST("/insertKey", app.GenKeyFileController())
 	}
 	router.Run(":8080")
 
 }
-
-//6048726614496508713878300278815397381906177242929895369650895101732324435675
-//6829401635473773037320850146839216518456048656358077053368809942868569262482
-//111117949253145538666741223747812423626384789221178933318006058448485265292409

@@ -5,15 +5,11 @@ import (
 	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
+	"log"
 )
 
-type Voter struct {
-	Id      int    `json:"id"`
-	Name    string `json:"name"`
-	IdCard  string `json:"idCard"`
-	IsVoted bool   `json:"isVoted"` //投票人是否已经投票,每人一票
+type SmartContract struct {
 }
-
 type Candidate struct {
 	Id        int    `json:"id"`
 	Name      string `json:"name"`
@@ -23,88 +19,129 @@ type Candidate struct {
 	VoteCount int    `json:"voteCount"` //候选人得票数
 }
 
-//数据从数据库导出？？？？？？？？？？
-var voters = []*Voter{
-	{1, "zhangsan", "123456", false},
-	{2, "lisi", "123456", false},
-	{3, "wangwu", "123456", false},
-}
-
-var candidates = []*Candidate{
-	{1, "奥巴马", "男", "123456789", "请投奥巴马一票", 0},
-	{2, "特朗普", "男", "123456789", "请投特朗普一票", 0},
-	{3, "希拉里", "女", "123456789", "请投希拉里一票", 0},
-}
-
-type SmartContract struct {
-}
-
 const (
-	VOTER      = "voter"
-	CANDIDATES = "candidate"
+	CANDIDATES = "CANDIDATES"
+	PUBLICKEYS = "PUBLICKEYS"
+	BLINDSIGN  = "BLINDSIGN"
 )
 
 func (s *SmartContract) Init(stub shim.ChaincodeStubInterface) pb.Response {
-	voterAsBytes, err := json.Marshal(voters)
-	if err != nil {
-		return shim.Error(err.Error())
-	}
-	err = stub.PutState(VOTER, voterAsBytes)
-	if err != nil {
-		return shim.Error(err.Error())
-	}
-
-	candidatesAsBytes, err := json.Marshal(candidates)
-	if err != nil {
-		return shim.Error(err.Error())
-	}
-	err = stub.PutState(CANDIDATES, candidatesAsBytes)
-	if err != nil {
-		return shim.Error(err.Error())
-	}
-
-	return shim.Success([]byte("Init Success"))
-}
-func (s *SmartContract) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
-	funcName, args := stub.GetFunctionAndParameters()
-	if funcName == "queryAllCandidates" {
-		return s.queryAllCandidates(stub, args)
-	} else if funcName == "vote" {
-		return s.vote(stub, args)
-	}
-	return shim.Error("Invoke Failed")
+	return shim.Success([]byte("init success"))
 }
 
-func (s *SmartContract) queryAllCandidates(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+func (s *SmartContract) PutAllCandidates(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	candidatesBytes := []byte(args[0])
+	err := stub.PutState(CANDIDATES, candidatesBytes)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	err = stub.SetEvent(args[1], []byte{})
+	return shim.Success([]byte("putAllCandidates success"))
+}
+
+func (s *SmartContract) GetAllCandidates(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	candidatesAsBytes, err := stub.GetState(CANDIDATES)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
+	log.Printf("%s", candidatesAsBytes)
 	return shim.Success(candidatesAsBytes)
 }
-func (s *SmartContract) vote(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	voteName := args[0]
-	if len(args) != 1 {
-		return shim.Error("vote:Incorrect number of arguments!")
+
+//投票
+//第一个参数为投票信息，第二个参数为eventID
+func (s *SmartContract) Vote(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 2 {
+		return shim.Error("Vote:incorrect number of arguements")
 	}
 	candidatesAsBytes, err := stub.GetState(CANDIDATES)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
-	cs := make([]*Candidate, 5)
-	json.Unmarshal(candidatesAsBytes, &cs)
-	for _, c := range cs {
-		if c.Name == voteName {
-			c.VoteCount++
-		}
-	}
-	candidatesAsBytes, err = json.Marshal(cs)
+	var candidates []Candidate
+	err = json.Unmarshal(candidatesAsBytes, &candidates)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
-	stub.PutState(CANDIDATES, candidatesAsBytes)
-	fmt.Println(string(candidatesAsBytes))
-	stub.SetEvent("eventInvoke", nil)
+	for i := 0; i < len(candidates); i++ {
+		if candidates[i].Name == args[0] {
+			candidates[i].VoteCount++
+			break
+		}
+	}
+	bytes, _ := json.Marshal(candidates)
+
+	err = stub.PutState(CANDIDATES, bytes)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	stub.SetEvent(args[1], []byte{})
+	return shim.Success(bytes)
+
+}
+
+func (s *SmartContract) PutAllPK(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	PKBytes := []byte(args[0])
+	err := stub.PutState(PUBLICKEYS, PKBytes)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	err = stub.SetEvent(args[1], []byte{})
+	return shim.Success([]byte("PutAllPK success"))
+}
+
+func (s *SmartContract) GetAllPK(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	pkAsBytes, err := stub.GetState(PUBLICKEYS)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	log.Printf("%s", pkAsBytes)
+	return shim.Success(pkAsBytes)
+}
+
+func (s *SmartContract) PutSign(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	bytes, err := stub.GetState(BLINDSIGN)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	//args[0]为签名信息 args[1]为投票信息
+	rsName := args[0]
+
+	err = stub.PutState(BLINDSIGN, []byte(rsName))
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	fmt.Println(string(bytes))
+	stub.SetEvent(args[1], []byte{})
+	return shim.Success([]byte("putBlindSign success"))
+}
+
+func (s *SmartContract) GetAllSign(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	signAsBytes, err := stub.GetState(BLINDSIGN)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	log.Printf("%s", signAsBytes)
+	return shim.Success(signAsBytes)
+}
+
+func (s *SmartContract) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
+	funcName, args := stub.GetFunctionAndParameters()
+	if funcName == "GetAllCandidates" {
+		return s.GetAllCandidates(stub, args)
+	} else if funcName == "PutAllCandidates" {
+		return s.PutAllCandidates(stub, args)
+	} else if funcName == "Vote" {
+		return s.Vote(stub, args)
+	} else if funcName == "PutAllPK" {
+		return s.PutAllPK(stub, args)
+	} else if funcName == "GetAllPK" {
+		return s.GetAllPK(stub, args)
+	} else if funcName == "PutSign" {
+		return s.PutSign(stub, args)
+	} else if funcName == "GetAllSign" {
+		return s.GetAllSign(stub, args)
+	}
 	return shim.Success(nil)
 }
 

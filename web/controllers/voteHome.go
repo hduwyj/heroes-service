@@ -1,84 +1,76 @@
 package controllers
 
 import (
-	"crypto/elliptic"
-	"crypto/rand"
+	"encoding/json"
 	"fmt"
-	"github.com/chainHero/heroes-service/models"
-	"github.com/chainHero/heroes-service/web/controllers/util"
+	"github.com/chainHero/heroes-service/allType"
 	"github.com/gin-gonic/gin"
-	"github.com/hduwyj/urs"
 	"log"
 	"net/http"
 )
 
-var candidates = make([]*util.Candidate, 5)
+func (app *Application) VoteHomeHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		//username, _ := c.Cookie("user")
 
-//func VoteHomeHandle(c *gin.Context) {
-//
-//	allCandidateAsBytes, _ := util.App.Fabric.QueryAllCandidate()
-//	json.Unmarshal(allCandidateAsBytes, &candidates)
-//
-//	op := c.Query("op")
-//	if op == "vote" {
-//		name := c.Query("name")
-//		for _, candidate := range candidates {
-//			if candidate.Name == name {
-//				transactionID, err := util.App.Fabric.Vote([]string{name})
-//				if err != nil {
-//					fmt.Println(err)
-//				}
-//				c.HTML(http.StatusOK, "voteSuccess.html", gin.H{
-//					"transactionID": transactionID,
-//				})
-//			}
-//		}
-//	} else {
-//		c.HTML(http.StatusOK, "voteHome.html", gin.H{
-//			"candidates": candidates,
-//		})
-//	}
-//
-//}
-func VoteHomeHandle(c *gin.Context) {
-	candidates := models.Query()
-	op := c.Query("op")
-
-	switch op {
-	case "vote":
-		name := c.Query("name")
-		//for _,candidate:=range candidates{
-		//	if candidate.Name==name{
-		//		candidate.VoteCount++
-		//	}
-		//}
-		priv := c.PostForm("privateKey")
-		fmt.Println("privateKey:", priv)
-		for i := 0; i < len(candidates); i++ {
-			if candidates[i].Name == name {
-				candidates[i].VoteCount++
-			}
-		}
-		c.HTML(http.StatusOK, "voteHome.html", gin.H{
-			"candidates": candidates,
-			"priv":       priv,
-		})
-	case "genKey":
-		priv, err := urs.GenerateKey(elliptic.P256(), rand.Reader)
+		//candidates := models.Query()
+		candidatesAsBytes, err := app.Fabric.QueryAllCandidate()
 		if err != nil {
 			log.Printf("%v", err)
 		}
-		c.HTML(http.StatusOK, "voteHome.html", gin.H{
-			"candidates":  candidates,
-			"priv":        priv.D,
-			"publicKey_x": priv.X,
-			"publicKey_y": priv.Y,
-		})
+		var candidates []allType.Candidate
+		err = json.Unmarshal(candidatesAsBytes, &candidates)
+		if err != nil {
+			log.Printf("%v", err)
+		}
+		for _, c := range candidates {
+			fmt.Println(c.VoteCount)
+		}
+		//op := c.Query("op")
+		//
+		//switch op {
+		//case "vote":
+		//	name := c.Query("name")
+		//	bytes, err := app.Fabric.Vote([]byte(name))
+		//	if err!=nil{
+		//		fmt.Println(err)
+		//	}
+		//	json.Unmarshal(bytes,&candidates)
+		//	c.HTML(http.StatusOK, "voteHome.html", gin.H{
+		//		"candidates": candidates,
+		//	})
+		//case "genKey":
+		//	isGenerateKey := models.IsGenerateKey(username)
+		//	if !isGenerateKey{
+		//		priv, err := urs.GenerateKey(elliptic.P256(), rand.Reader)
+		//		if err != nil {
+		//			log.Printf("%v", err)
+		//		}
+		//		err = models.UpdateGenerateKey(username)
+		//		if err!=nil{
+		//			fmt.Println(err)
+		//		}
+		//		c.HTML(http.StatusOK, "voteHome.html", gin.H{
+		//			"candidates":  candidates,
+		//			"priv":        priv.D,
+		//			"publicKey_x": priv.X,
+		//			"publicKey_y": priv.Y,
+		//		})
+		//	}else {
+		//		c.JSON(http.StatusBadRequest,"你已经生成过密钥")
+		//	}
+		//
+		//
+		//default:
+		//	c.HTML(http.StatusOK, "voteHome.html", gin.H{
+		//		"candidates": candidates,
+		//	})
+		//}
 
-	default:
 		c.HTML(http.StatusOK, "voteHome.html", gin.H{
 			"candidates": candidates,
 		})
+
 	}
 
 }

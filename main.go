@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/chainHero/heroes-service/blockchain"
-	"github.com/chainHero/heroes-service/web/controllers/util"
+	"github.com/chainHero/heroes-service/web/controllers"
 	"github.com/chainHero/heroes-service/web/router"
 	"os"
 )
@@ -56,9 +56,8 @@ func main() {
 	//	Fabric: &fSetup,
 	//}
 	//web.Serve(app)
-	app := &util.Application{
+	app := &controllers.Application{
 		Fabric: &fSetup,
 	}
-	app.GetApp()
-	router.InitRouter()
+	router.InitRouter(app)
 }

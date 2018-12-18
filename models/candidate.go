@@ -1,11 +1,11 @@
 package models
 
 import (
-	"github.com/chainHero/heroes-service/web/controllers/util"
+	"github.com/chainHero/heroes-service/allType"
 	"log"
 )
 
-func Query() []util.Candidate {
+func Query() []allType.Candidate {
 
 	//查询
 	stmt, err := db.Prepare("select * from candidate ")
@@ -18,8 +18,8 @@ func Query() []util.Candidate {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var candidates []util.Candidate
-	candidate := util.Candidate{}
+	var candidates []allType.Candidate
+	candidate := allType.Candidate{}
 	for rows.Next() {
 		err := rows.Scan(&candidate.Id, &candidate.Name, &candidate.Gender, &candidate.IdCard, &candidate.Content, &candidate.VoteCount)
 		if err != nil {
@@ -31,7 +31,7 @@ func Query() []util.Candidate {
 	return candidates
 }
 
-func InsertCandidate(c util.Candidate) error {
+func InsertCandidate(c allType.Candidate) error {
 	stmt, err := db.Prepare("INSERT INTO candidate VALUES(?,?,?,?,?,?)")
 	defer stmt.Close()
 	if err != nil {

@@ -5,7 +5,7 @@ import (
 )
 
 func InsertVoter(username string, password string) error {
-	stmtIns, err := db.Prepare("INSERT INTO voter VALUES(?,?)")
+	stmtIns, err := db.Prepare("INSERT INTO voter(username, password) VALUES(?,?)")
 	if err != nil {
 		return err
 	}
@@ -18,6 +18,7 @@ func InsertVoter(username string, password string) error {
 
 func IsValidateVoter(username string, password string) bool {
 	stmtOut, err := db.Prepare("SELECT password FROM voter WHERE username = ?")
+	defer stmtOut.Close()
 	if err != nil {
 		log.Printf("%v", err)
 		return false
@@ -34,18 +35,33 @@ func IsValidateVoter(username string, password string) bool {
 	return false
 }
 
-//
-//func UpdateVoter(voteCount int ,name string) error{
-//	stmtOut,err := db.Prepare("UPDATE voter SET voteCount = ? WHERE name=?")
-//	defer stmtOut.Close()
-//	if err!=nil{
-//		log.Printf("%v",err)
-//		return err
-//	}
-//	voteCount++
-//	_, err = stmtOut.Exec(voteCount, name)
-//	if err!=nil{
-//		log.Printf("%v",err)
-//		return err
-//	}
-//}
+func IsGenerateKey(username string) bool {
+	stmtOut, err := db.Prepare("SELECT generateKey FROM voter WHERE username = ?")
+	defer stmtOut.Close()
+	if err != nil {
+		log.Printf("%v", err)
+		return false
+	}
+	generateKey := 0
+	err = stmtOut.QueryRow(username).Scan(&generateKey)
+	if generateKey == 0 {
+		return false
+	}
+	return true
+}
+
+func UpdateGenerateKey(username string) error {
+	stmtOut, err := db.Prepare("UPDATE voter SET generateKey = ? WHERE username=?")
+	defer stmtOut.Close()
+	if err != nil {
+		log.Printf("%v", err)
+		return err
+	}
+
+	_, err = stmtOut.Exec(1, username)
+	if err != nil {
+		log.Printf("%v", err)
+		return err
+	}
+	return nil
+}

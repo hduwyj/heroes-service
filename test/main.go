@@ -1,7 +1,9 @@
 package main
 
-import "github.com/chainHero/heroes-service/web/router"
+import "fmt"
 
 func main() {
-	router.InitRouter()
+	//app := controllers.Application{}
+	//router.InitRouter(&app)
+	fmt.Println("wang" == "wang")
 }

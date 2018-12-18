@@ -5,6 +5,8 @@ import (
 	"net/http"
 )
 
-func HomeConroller(c *gin.Context) {
-	c.HTML(http.StatusOK, "home.html", nil)
+func (app *Application) HomeController() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.HTML(http.StatusOK, "home.html", nil)
+	}
 }
